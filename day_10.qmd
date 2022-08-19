@@ -1,0 +1,62 @@
+---
+title: "day 10"
+format: html
+editor: visual
+---
+
+```{r}
+
+library(here)
+library(lubridate)
+library(tidyverse)
+icecover <- read_csv(here("-8599252033038187688ntl33_v7.csv"), na = "-999")
+weather <- read_csv(here("-3915285798661344744ntl20_v6.csv"))
+
+
+
+```
+
+```{r}
+ggplot(data = icecover, aes(x = lakeid, y = ice_duration)) +
+  geom_jitter(width = 0.2, color = "gray50") +
+  geom_boxplot(width = 0.3, fill = NA, size = 1, outlier.color = NA)
+```
+
+```{r}
+mean_duration <- icecover %>% 
+  group_by(year4) %>% 
+  summarize(mean_duration = mean(ice_duration, na.rm = TRUE))
+ggplot(data = mean_duration, aes(x = year4, y = mean_duration)) +
+  geom_line()
+```
+
+```{r}
+weather_summary <- weather %>% 
+  filter(month %in% c(12, 1, 2)) %>% 
+  group_by(year4) %>% 
+  summarize(mean_temp = mean(ave_air_temp_adjusted, na.rm = TRUE))
+```
+
+```{r}
+ggplot(data = weather_summary, aes(x = year4, y = mean_temp)) +
+  geom_line()
+```
+
+```{r}
+ice_weather_join <- mean_duration %>% 
+  full_join(weather_summary)
+```
+
+```{r}
+ggplot(data = ice_weather_join, aes(x = mean_temp, y = mean_duration)) +
+  geom_point()
+```
+
+```{r}
+thaw_dates <- icecover %>% 
+  filter(year4 >= 1970) %>% 
+  mutate(ice_off = lubridate::mdy(ice_off)) %>% 
+  mutate(day_ice_off = lubridate::yday(ice_off))
+ggplot(data = thaw_dates, aes(x = year4, y = day_ice_off)) +
+  geom_point()
+```
